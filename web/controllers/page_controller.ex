@@ -3,6 +3,19 @@ defmodule ETagTracker.PageController do
   alias ETagTracker.Visitor
 
   def index(conn, _params) do
+    visitor = find_or_initialize_visitor(conn)
+
+    Repo.insert_or_update(
+      Visitor.changeset(visitor, %{visits: visitor.visits + 1})
+    )
+
+    conn
+    |> put_resp_header("etag", visitor.token)
+    |> assign(:visits, visitor.visits)
+    |> render("index.html")
+  end
+
+  defp find_or_initialize_visitor(conn) do
     visitor = case get_req_header(conn, "if-none-match") do
       [value] ->
         Visitor |> Repo.get_by(token: value)
@@ -10,20 +23,7 @@ defmodule ETagTracker.PageController do
         nil
     end
 
-    case visitor do
-      nil ->
-        visitor = %Visitor{visits: 0, token: generate_token}
-      _ ->
-    end
-
-    visits = visitor.visits
-
-    Repo.insert_or_update(Visitor.changeset(visitor, %{visits: visits + 1}))
-
-    conn
-    |> put_resp_header("etag", visitor.token)
-    |> assign(:visits, visits)
-    |> render("index.html")
+    visitor || %Visitor{visits: 0, token: generate_token()}
   end
 
   defp generate_token do
