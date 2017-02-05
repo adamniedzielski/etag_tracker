@@ -12,8 +12,6 @@ config :logger, level: :warn
 # Configure your database
 config :etag_tracker, ETagTracker.Repo,
   adapter: Ecto.Adapters.Postgres,
-  username: "postgres",
-  password: "postgres",
   database: "etag_tracker_test",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
